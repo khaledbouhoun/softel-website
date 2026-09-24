@@ -403,4 +403,79 @@ class SoftelWebsiteTest extends TestCase
         $response->assertSee('data-logo-light', false);
         $response->assertSee('data-logo-dark', false);
     }
+
+    public function test_product_detail_page_renders_product_specific_whatsapp_cta_and_phone_link(): void
+    {
+        $locales = ['en', 'fr', 'ar'];
+        $productSlugs = ['gestcom', 'gestcom-importation', 'gestcom-production', 'gestcom-paie'];
+
+        $expectedButtonLabels = [
+            'en' => 'Contact us about this product',
+            'fr' => 'Contactez-nous à propos de ce produit',
+            'ar' => 'تواصل معنا حول هذا المنتج',
+        ];
+
+        foreach ($productSlugs as $slug) {
+            $product = Product::where('slug', $slug)->first();
+            $this->assertNotNull($product, "Product {$slug} must exist in the database");
+
+            foreach ($locales as $locale) {
+                $response = $this->get("/{$locale}/products/{$slug}");
+                $response->assertStatus(200);
+
+                $title = $product->getLocalized('title', $locale);
+                $this->assertNotEmpty($title);
+                $response->assertSee($title);
+
+                // Verify primary contact button exists and is localized
+                $response->assertSee($expectedButtonLabels[$locale]);
+
+                // Verify phone fallback link
+                $response->assertSee('href="tel:+213558925355"', false);
+                $response->assertSee('0558 92 53 55');
+
+                // Verify WhatsApp URL
+                $expectedUrl = $product->getWhatsAppUrl($locale);
+                $this->assertStringStartsWith('https://wa.me/213558925355?text=', $expectedUrl);
+                $response->assertSee(e($expectedUrl), false);
+
+                // Extract query string parameter and decode
+                parse_str(parse_url($expectedUrl, PHP_URL_QUERY), $queryParams);
+                $this->assertArrayHasKey('text', $queryParams);
+                $decodedMessage = $queryParams['text'];
+
+                // Verify decoded message contains product title
+                $this->assertStringContainsString($title, $decodedMessage);
+
+                // Verify language-specific content
+                if ($locale === 'en') {
+                    $this->assertStringContainsString('Hello SOFTEL,', $decodedMessage);
+                    $this->assertStringContainsString("I am interested in your product \"{$title}\".", $decodedMessage);
+                    $this->assertStringContainsString('I would like to get more information about this solution.', $decodedMessage);
+                    $this->assertStringContainsString('Thank you.', $decodedMessage);
+                } elseif ($locale === 'fr') {
+                    $this->assertStringContainsString('Bonjour SOFTEL,', $decodedMessage);
+                    $this->assertStringContainsString("Je suis intéressé(e) par votre solution « {$title} ».", $decodedMessage);
+                    $this->assertStringContainsString("Je souhaiterais obtenir plus d'informations sur cette solution.", $decodedMessage);
+                    $this->assertStringContainsString('Merci.', $decodedMessage);
+                } elseif ($locale === 'ar') {
+                    $response->assertSee('dir="rtl"', false);
+                    $this->assertStringContainsString('مرحباً SOFTEL،', $decodedMessage);
+                    $this->assertStringContainsString("أنا مهتم بمنتج « {$title}».", $decodedMessage);
+                    $this->assertStringContainsString('أرغب في الحصول على مزيد من المعلومات حول هذا الحل.', $decodedMessage);
+                    $this->assertStringContainsString('شكراً لكم.', $decodedMessage);
+                }
+            }
+        }
+    }
+
+    public function test_whatsapp_message_falls_back_to_english_for_unknown_locale(): void
+    {
+        $product = Product::where('slug', 'gestcom')->first();
+        $this->assertNotNull($product);
+
+        $message = $product->getWhatsAppMessage('de');
+        $this->assertStringContainsString('Hello SOFTEL,', $message);
+        $this->assertStringContainsString($product->getLocalized('title', 'en'), $message);
+    }
 }

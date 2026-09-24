@@ -129,6 +129,9 @@ return [
     'products_empty_title' => 'تطوير برمجيات وحلول رقمية مخصصة',
     'products_empty_desc' => 'إلى جانب حلولنا الجاهزة، تبني سوفتيل برمجيات مفصلة وفق المتطلبات الخاصة لمؤسستك أو منشأتك. تواصل معنا لمناقشة أهداف مشروعك البرمجي.',
     'products_empty_cta' => 'طلب استشارة فنية',
+    'products_contact_cta' => 'تواصل معنا حول هذا المنتج',
+    'products_call_us' => 'اتصل بنا:',
+    'products_whatsapp_message' => "مرحباً SOFTEL،\n\nأنا مهتم بمنتج « :product».\n\nأرغب في الحصول على مزيد من المعلومات حول هذا الحل.\n\nشكراً لكم.",
 
     // Testimonials Section
     'testimonials_title' => 'ثقة عملائنا',
@@ -145,7 +148,7 @@ return [
     'contact_phone_label' => 'أرقام الهاتف',
     'contact_email_label' => 'البريد الإلكتروني',
     'contact_hours_label' => 'أوقات العمل',
-    'contact_hours_value' => 'الأحد – الخميس: 08:30 صباحاً – 05:00 مساءً',
+    'contact_hours_value' => 'الأحد – الخميس: 08:00 صباحاً – 05:00 مساءً',
     'contact_form_title' => 'أرسل لنا رسالة',
     'contact_name' => 'الاسم الكامل',
     'contact_name_placeholder' => 'مثال: كريم بن علي',

@@ -129,6 +129,9 @@ return [
     'products_empty_title' => 'Solutions Sur Mesure & Ingénierie Spécifique',
     'products_empty_desc' => 'En plus de nos solutions clés en main, SOFTEL développe des logiciels sur mesure répondant fidèlement aux spécificités de votre organisation. Contactez-nous pour échanger sur vos besoins.',
     'products_empty_cta' => 'Demander une consultation',
+    'products_contact_cta' => 'Contactez-nous à propos de ce produit',
+    'products_call_us' => 'Appelez-nous :',
+    'products_whatsapp_message' => "Bonjour SOFTEL,\n\nJe suis intéressé(e) par votre solution « :product ».\n\nJe souhaiterais obtenir plus d'informations sur cette solution.\n\nMerci.",
 
     // Testimonials Section
     'testimonials_title' => 'Confiance Client',
@@ -145,7 +148,7 @@ return [
     'contact_phone_label' => 'Numéros de téléphone',
     'contact_email_label' => 'Adresse e-mail',
     'contact_hours_label' => 'Horaires de travail',
-    'contact_hours_value' => 'Dimanche – Jeudi : 08h30 – 17h00',
+    'contact_hours_value' => 'Dimanche – Jeudi : 08h00 – 17h00',
     'contact_form_title' => 'Envoyez-nous un message',
     'contact_name' => 'Nom complet',
     'contact_name_placeholder' => 'ex. Karim Benali',

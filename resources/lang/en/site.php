@@ -129,6 +129,9 @@ return [
     'products_empty_title' => 'Bespoke Software & Custom Solutions',
     'products_empty_desc' => 'In addition to our core solutions, SOFTEL engineers custom software designed around your specific organizational workflows. Contact us to discuss your project requirements.',
     'products_empty_cta' => 'Request a Consultation',
+    'products_contact_cta' => 'Contact us about this product',
+    'products_call_us' => 'Call us:',
+    'products_whatsapp_message' => "Hello SOFTEL,\n\nI am interested in your product \":product\".\n\nI would like to get more information about this solution.\n\nThank you.",
 
     // Testimonials Section
     'testimonials_title' => 'Client Trust',
@@ -145,7 +148,7 @@ return [
     'contact_phone_label' => 'Phone Numbers',
     'contact_email_label' => 'Email Address',
     'contact_hours_label' => 'Business Hours',
-    'contact_hours_value' => 'Sunday – Thursday: 8:30 AM – 5:00 PM',
+    'contact_hours_value' => 'Sunday – Thursday: 8:00 AM – 5:00 PM',
     'contact_form_title' => 'Send Us a Message',
     'contact_name' => 'Full Name',
     'contact_name_placeholder' => 'e.g. Karim Benali',
