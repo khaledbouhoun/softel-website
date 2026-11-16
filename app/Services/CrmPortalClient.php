@@ -37,6 +37,24 @@ class CrmPortalClient
     }
 
     /**
+     * @param  array<string, mixed>  $payload
+     * @return array{data: mixed, meta: mixed}
+     */
+    public function patch(string $path, array $payload = [], bool $auth = true): array
+    {
+        return $this->send('patch', $path, $payload, $auth);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{data: mixed, meta: mixed}
+     */
+    public function delete(string $path, array $payload = [], bool $auth = true): array
+    {
+        return $this->send('delete', $path, $payload, $auth);
+    }
+
+    /**
      * Multipart upload of a single file field named "file".
      *
      * @return array{data: mixed, meta: mixed}
@@ -104,7 +122,7 @@ class CrmPortalClient
     {
         $this->assertConfigured();
 
-        $verb = $method === 'get' ? 'GET' : 'POST';
+        $verb = strtoupper($method);
 
         try {
             $request = $this->pending($auth);
@@ -113,6 +131,8 @@ class CrmPortalClient
                 // Idempotent reads may retry on a dropped connection; writes never retry.
                 'get' => $request->retry(2, 150, fn ($e) => $e instanceof ConnectionException, throw: false)->get($this->url($path), $data),
                 'upload' => $request->attach('file', $data['file']->getContent(), $data['file']->getClientOriginalName())->post($this->url($path)),
+                'patch' => $request->asJson()->patch($this->url($path), $data),
+                'delete' => $request->asJson()->delete($this->url($path), $data),
                 default => $request->asJson()->post($this->url($path), $data),
             };
         } catch (ConnectionException) {
@@ -125,6 +145,10 @@ class CrmPortalClient
         }
 
         $json = $response->json();
+        if (! is_array($json)) {
+            Log::warning('crm.invalid_json', ['method' => $verb, 'path' => $path, 'status' => $response->status()]);
+            throw new CrmApiException('Invalid response from CRM', $response->status());
+        }
 
         return ['data' => $json['data'] ?? null, 'meta' => $json['meta'] ?? null];
     }

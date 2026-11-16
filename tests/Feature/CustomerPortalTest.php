@@ -631,4 +631,60 @@ class CustomerPortalTest extends TestCase
 
         $this->withSession($this->signedIn())->get('/en/portal')->assertSee('data-extension-point="ai-assistant"', false);
     }
+
+    public function test_crm_portal_client_supports_patch_and_delete_methods(): void
+    {
+        $client = app(\App\Services\CrmPortalClient::class);
+
+        Http::fake([
+            self::BASE.'me' => Http::response(['success' => true, 'data' => ['name' => 'Updated'], 'meta' => null], 200),
+            self::BASE.'items/1' => Http::response(['success' => true, 'data' => null, 'meta' => null], 200),
+        ]);
+
+        session(['portal.token' => 'test-bearer-token']);
+
+        $patchRes = $client->patch('me', ['name' => 'Updated']);
+        $this->assertSame(['name' => 'Updated'], $patchRes['data']);
+
+        Http::assertSent(fn (Request $r) => $r->method() === 'PATCH'
+            && str_ends_with($r->url(), '/me')
+            && $r['name'] === 'Updated'
+            && $r->hasHeader('X-Portal-Key', 'secret-service-key')
+            && $r->hasHeader('Authorization', 'Bearer test-bearer-token')
+        );
+
+        $delRes = $client->delete('items/1');
+        $this->assertNull($delRes['data']);
+
+        Http::assertSent(fn (Request $r) => $r->method() === 'DELETE'
+            && str_ends_with($r->url(), '/items/1')
+            && $r->hasHeader('X-Portal-Key', 'secret-service-key')
+        );
+    }
+
+    public function test_crm_portal_client_throws_on_invalid_json_response(): void
+    {
+        $client = app(\App\Services\CrmPortalClient::class);
+
+        Http::fake([
+            self::BASE.'bad-endpoint' => Http::response('<html>Gateway Error</html>', 200, ['Content-Type' => 'text/html']),
+        ]);
+
+        $this->expectException(\App\Exceptions\CrmApiException::class);
+        $this->expectExceptionMessage('Invalid response from CRM');
+
+        $client->get('bad-endpoint', [], false);
+    }
+
+    public function test_crm_portal_client_throws_when_unconfigured(): void
+    {
+        config(['services.crm.base_url' => '', 'services.crm.key' => '']);
+        $client = app(\App\Services\CrmPortalClient::class);
+
+        $this->assertFalse($client->isConfigured());
+        $this->expectException(\App\Exceptions\CrmApiException::class);
+        $this->expectExceptionMessage('CRM is not configured');
+
+        $client->get('catalog/products', [], false);
+    }
 }
