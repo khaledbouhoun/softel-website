@@ -135,6 +135,22 @@
           @endif
 
 
+          {{-- Portal request CTAs (sign-in required; selection is kept through sign-in/sign-up) --}}
+          <div class="mb-4 flex flex-col sm:flex-row flex-wrap gap-3">
+            <a href="{{ route('portal.request.create', ['locale' => $currentLocale, 'product' => $product->slug, 'type' => 'demo']) }}"
+              class="inline-flex items-center justify-center bg-[#009EE0] hover:bg-[#0088c2] text-white font-bold px-5 py-3 rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#009EE0] focus:ring-offset-2">
+              {{ __('site.portal_cta_demo') }}
+            </a>
+            <a href="{{ route('portal.request.create', ['locale' => $currentLocale, 'product' => $product->slug, 'type' => 'quotation']) }}"
+              class="inline-flex items-center justify-center border border-[#009EE0] text-[#009EE0] hover:bg-[#009EE0] hover:text-white font-bold px-5 py-3 rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#009EE0] focus:ring-offset-2">
+              {{ __('site.portal_cta_quotation') }}
+            </a>
+            <a href="{{ route('portal.request.create', ['locale' => $currentLocale, 'product' => $product->slug, 'type' => 'trial']) }}"
+              class="inline-flex items-center justify-center border border-[#CBD5E1] dark:border-[#26313C] text-[#111111] dark:text-[#F8FAFC] hover:border-[#009EE0] hover:text-[#009EE0] font-bold px-5 py-3 rounded-xl text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#009EE0] focus:ring-offset-2">
+              {{ __('site.portal_cta_trial') }}
+            </a>
+          </div>
+
           {{-- Contact Card --}}
           <div class="mt-auto p-5 sm:p-6
             rounded-2xl

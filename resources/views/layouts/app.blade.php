@@ -248,6 +248,10 @@
           class="transition-colors hover:text-[#009EE0] dark:hover:text-[#009EE0] {{ request()->routeIs('contact.*') ? 'text-[#009EE0] dark:text-[#009EE0]' : 'text-[#111111] dark:text-[#F8FAFC]' }}">
           {{ __('site.nav_contact') }}
         </a>
+        <a href="{{ route('portal.dashboard', $currentLocale) }}"
+          class="transition-colors hover:text-[#009EE0] dark:hover:text-[#009EE0] {{ request()->routeIs('portal.*') ? 'text-[#009EE0] dark:text-[#009EE0]' : 'text-[#111111] dark:text-[#F8FAFC]' }}">
+          {{ __('site.portal_nav_area') }}
+        </a>
       </nav>
 
       {{-- Right Actions: Language Selector, Theme Switcher & CTA --}}
@@ -369,6 +373,10 @@
         <a href="{{ route('contact.create', $currentLocale) }}"
           class="px-2 py-1.5 rounded-md hover:bg-sky-50 dark:hover:bg-[#111820] hover:text-[#009EE0] dark:hover:text-[#009EE0] {{ request()->routeIs('contact.*') ? 'text-[#009EE0] dark:text-[#009EE0] bg-sky-50 dark:bg-[#009EE0]/10' : '' }}">
           {{ __('site.nav_contact') }}
+        </a>
+        <a href="{{ route('portal.dashboard', $currentLocale) }}"
+          class="px-2 py-1.5 rounded-md hover:bg-sky-50 dark:hover:bg-[#111820] hover:text-[#009EE0] dark:hover:text-[#009EE0] {{ request()->routeIs('portal.*') ? 'text-[#009EE0] dark:text-[#009EE0] bg-sky-50 dark:bg-[#009EE0]/10' : '' }}">
+          {{ __('site.portal_nav_area') }}
         </a>
         <div class="pt-2 border-t border-[#E2E8F0] dark:border-[#26313C]">
           <a href="{{ route('contact.create', $currentLocale) }}"
