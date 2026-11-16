@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    /*
+    | SOFTEL CRM customer portal API (server-to-server only; never exposed to browsers).
+    */
+    'crm' => [
+        'base_url' => env('CRM_API_URL'),
+        'key' => env('CRM_API_KEY'),
+        'timeout' => (int) env('CRM_API_TIMEOUT', 10),
+    ],
+
 ];
