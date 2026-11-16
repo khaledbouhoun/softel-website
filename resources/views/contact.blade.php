@@ -116,6 +116,7 @@
 
                     <form method="POST" action="{{ route('contact.store', $currentLocale) }}" class="space-y-6">
                         @csrf
+                        <input type="hidden" name="source" value="{{ old('source', $source) }}">
 
                         <div class="grid sm:grid-cols-2 gap-6">
                             <div>
@@ -159,6 +160,22 @@
                                        placeholder="{{ __('site.contact_company_placeholder') }}">
                                 @error('company') <p class="text-red-600 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
                             </div>
+                        </div>
+
+                        <div>
+                            <label for="product_id" class="block text-xs font-bold text-[#111111] dark:text-[#CBD5E1] uppercase tracking-wider mb-2">
+                                {{ __('site.contact_product') }}
+                            </label>
+                            <select id="product_id" name="product_id"
+                                    class="w-full bg-white dark:bg-[#0B0F14] text-[#111111] dark:text-[#F8FAFC] border border-gray-300 dark:border-[#26313C] rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#009EE0] focus:border-[#009EE0] transition">
+                                <option value="">{{ __('site.contact_product_placeholder') }}</option>
+                                @foreach ($products as $product)
+                                    <option value="{{ $product->id }}" @selected((string) old('product_id', $selectedProduct?->id) === (string) $product->id)>
+                                        {{ $product->getLocalized('title') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('product_id') <p class="text-red-600 dark:text-red-400 text-xs mt-1.5">{{ $message }}</p> @enderror
                         </div>
 
                         <div>

@@ -158,6 +158,8 @@ return [
     'contact_phone_placeholder' => '0550 00 00 00',
     'contact_company' => 'Entreprise ou Établissement',
     'contact_company_placeholder' => 'ex. SARL Entreprise ou Nom de l\'école',
+    'contact_product' => 'Produit concerné',
+    'contact_product_placeholder' => 'Sélectionnez un produit (facultatif)',
     'contact_message' => 'Message ou Détails du projet',
     'contact_message_placeholder' => 'Décrivez vos besoins logiciels, vos exigences de gestion ou votre demande...',
     'contact_submit' => 'Envoyer le message',

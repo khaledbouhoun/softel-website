@@ -158,6 +158,8 @@ return [
     'contact_phone_placeholder' => '0550 00 00 00',
     'contact_company' => 'اسم المؤسسة أو الشركة',
     'contact_company_placeholder' => 'مثال: شركة تجارية أو اسم المدرسة',
+    'contact_product' => 'المنتج محل الاهتمام',
+    'contact_product_placeholder' => 'اختر منتجاً (اختياري)',
     'contact_message' => 'تفاصيل الرسالة أو المشروع',
     'contact_message_placeholder' => 'صف متطلباتك البرمجية، التحديات التشغيلية، أو استفسارك...',
     'contact_submit' => 'إرسال الرسالة',

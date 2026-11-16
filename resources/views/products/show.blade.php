@@ -248,7 +248,7 @@
           {{ __('site.products_empty_desc') }}
         </span>
 
-        <a href="{{ route('contact.create', $currentLocale) }}" class="text-[#009EE0] hover:text-[#0088c2]
+        <a href="{{ route('contact.create', ['locale' => $currentLocale, 'product' => $product->slug, 'source' => 'product_page']) }}" class="text-[#009EE0] hover:text-[#0088c2]
           font-semibold hover:underline
           ms-1 inline-flex items-center gap-1">
 

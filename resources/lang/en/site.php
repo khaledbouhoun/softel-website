@@ -158,6 +158,8 @@ return [
     'contact_phone_placeholder' => '0550 00 00 00',
     'contact_company' => 'Company or Institution',
     'contact_company_placeholder' => 'e.g. Enterprise or School Name',
+    'contact_product' => 'Product of interest',
+    'contact_product_placeholder' => 'Select a product (optional)',
     'contact_message' => 'Message or Project Details',
     'contact_message_placeholder' => 'Describe your software requirements, operational challenges, or inquiry...',
     'contact_submit' => 'Send Message',
