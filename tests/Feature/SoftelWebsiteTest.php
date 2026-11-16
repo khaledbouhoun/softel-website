@@ -5,10 +5,21 @@ namespace Tests\Feature;
 use App\Models\Lead;
 use App\Models\Product;
 use App\Models\Service;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class SoftelWebsiteTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // The assertions below rely on the real catalogue (services, products, testimonials).
+        $this->seed();
+    }
+
     public function test_root_redirects_to_default_locale(): void
     {
         $response = $this->get('/');
