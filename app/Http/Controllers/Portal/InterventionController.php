@@ -59,7 +59,14 @@ class InterventionController extends Controller
 
     public function message(InterventionMessageRequest $request, string $locale, int $id): RedirectResponse
     {
-        $this->crm->post("interventions/{$id}/messages", ['body' => $request->validated('body')]);
+        try {
+            $this->crm->post("interventions/{$id}/messages", ['body' => $request->validated('body')]);
+        } catch (CrmApiException $e) {
+            if ($e->is('INTERVENTION_CLOSED')) {
+                return back()->with('portal_error', __('site.portal_closed_notice'));
+            }
+            throw $e;
+        }
 
         return redirect()->route('portal.interventions.show', ['locale' => $locale, 'id' => $id])->with('success', __('site.portal_message_sent'));
     }
@@ -69,6 +76,9 @@ class InterventionController extends Controller
         try {
             $this->crm->post("interventions/{$id}/transition", array_filter($request->validated(), fn ($v) => $v !== null && $v !== ''));
         } catch (CrmApiException $e) {
+            if ($e->is('INTERVENTION_CLOSED')) {
+                return back()->with('portal_error', __('site.portal_closed_notice'));
+            }
             if ($e->status === 422) {
                 return back()->with('portal_error', __('site.portal_transition_invalid'));
             }
@@ -83,6 +93,9 @@ class InterventionController extends Controller
         try {
             $this->crm->upload("interventions/{$id}/attachments", $request->file('file'));
         } catch (CrmApiException $e) {
+            if ($e->is('INTERVENTION_CLOSED')) {
+                return back()->with('portal_error', __('site.portal_closed_notice'));
+            }
             if ($e->status === 422) {
                 return back()->withErrors(['file' => __('site.portal_upload_failed')]);
             }
@@ -103,6 +116,22 @@ class InterventionController extends Controller
             'Content-Type' => $upstream->header('Content-Type') ?: 'application/octet-stream',
             'Content-Disposition' => $upstream->header('Content-Disposition') ?: 'attachment',
             'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]));
+    }
+
+    /**
+     * Images and PDFs open inline (preview modal); the CRM only serves previewable types and checks ownership.
+     */
+    public function preview(string $locale, int $id, int $attachmentId): Response
+    {
+        $upstream = $this->crm->download("interventions/{$id}/attachments/{$attachmentId}/preview");
+
+        return response($upstream->body(), 200, array_filter([
+            'Content-Type' => $upstream->header('Content-Type') ?: 'application/octet-stream',
+            'Content-Disposition' => $upstream->header('Content-Disposition') ?: 'inline',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
             'Cache-Control' => 'private, no-store',
         ]));
     }
