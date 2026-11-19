@@ -11,6 +11,7 @@
     <x-form-field name="password" type="password" :label="__('site.portal_password')" required autocomplete="current-password" />
     <x-button class="w-full">{{ __('site.portal_sign_in') }}</x-button>
   </form>
+  @include('portal.partials.google-auth', ['position' => 'after'])
 @endsection
 @section('footer')
   <p><a class="font-semibold text-[#009EE0] hover:underline" href="{{ route('portal.password.request', $currentLocale) }}">{{ __('site.portal_forgot_link') }}</a></p>

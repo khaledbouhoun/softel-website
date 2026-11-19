@@ -2,6 +2,7 @@
 @section('heading', __('site.portal_register_title'))
 @section('intro', __('site.portal_register_intro'))
 @section('card')
+  @include('portal.partials.google-auth', ['position' => 'before'])
   <form method="POST" action="{{ route('portal.register.store', $currentLocale) }}" class="space-y-4" novalidate>
     @csrf
     @foreach ($carry as $key => $val)

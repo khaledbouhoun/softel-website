@@ -36,6 +36,16 @@ return [
     ],
 
     /*
+    | Google OAuth (customer portal sign-in). The redirect URI is built per locale at runtime
+    | (/{locale}/portal/auth/google/callback); every locale's URL must be whitelisted in Google Cloud Console.
+    */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    /*
     | SOFTEL CRM customer portal API (server-to-server only; never exposed to browsers).
     */
     'crm' => [
