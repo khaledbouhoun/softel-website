@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Portal;
 
 use App\Exceptions\CrmApiException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Portal\PortalProfileRequest;
 use App\Services\CrmPortalClient;
 use App\Services\PortalSession;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Read pages of the customer portal plus request/appointment actions. All data comes from the CRM,
@@ -91,5 +94,82 @@ class AccountController extends Controller
     public function updates(): View
     {
         return view('portal.updates', ['updates' => (array) $this->crm->get('updates')['data']]);
+    }
+
+    // ---- profile
+
+    public function profile(Request $request): View
+    {
+        $profile = (array) $this->crm->get('profile')['data'];
+
+        if (isset($profile['account'])) {
+            $this->portal->remember($request, (array) $profile['account']);
+        }
+
+        return view('portal.profile', [
+            'profile' => $profile,
+            'account' => (array) ($profile['account'] ?? []),
+            'requests' => (array) ($profile['requests'] ?? []),
+            'status' => (array) ($profile['status'] ?? []),
+            'wilayas' => $this->wilayas(),
+        ]);
+    }
+
+    public function updateProfile(PortalProfileRequest $request, string $locale): RedirectResponse
+    {
+        try {
+            $account = (array) $this->crm->patch('me', $request->validated())['data'];
+        } catch (CrmApiException $e) {
+            if ($e->status === 422) {
+                return back()->withInput()->withErrors($e->fieldErrors() ?: ['name' => __('site.portal_generic_error')]);
+            }
+            throw $e;
+        }
+
+        $this->portal->remember($request, $account);
+
+        // Changing the language moves the visitor to the site in that language.
+        $target = (string) $request->validated('locale');
+
+        return redirect()->route('portal.profile', $target)->with('success', __('site.portal_profile_saved', [], $target));
+    }
+
+    /** @return list<array<string, string>> */
+    private function wilayas(): array
+    {
+        try {
+            return $this->crm->wilayas();
+        } catch (CrmApiException) {
+            return [];
+        }
+    }
+
+    // ---- releases
+
+    public function downloads(): View
+    {
+        $releases = (array) $this->crm->get('releases')['data'];
+
+        return view('portal.downloads', ['releases' => $releases, 'byProduct' => collect($releases)->groupBy(fn ($r) => $r['product']['name'] ?? '')]);
+    }
+
+    /** Installers can be large: the CRM body is streamed straight through, never held in memory. */
+    public function downloadRelease(string $locale, int $id): StreamedResponse
+    {
+        $upstream = $this->crm->stream("releases/{$id}/download");
+        $body = $upstream['body'];
+
+        return response()->stream(function () use ($body): void {
+            while (! $body->eof()) {
+                echo $body->read(65536);
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+            }
+        }, 200, $upstream['headers'] + [
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 }
