@@ -13,6 +13,8 @@
     ['portal.products', 'portal_nav_products', 'portal.products'],
     ['portal.interventions.index', 'portal_nav_support', 'portal.interventions.*'],
     ['portal.updates', 'portal_nav_updates', 'portal.updates'],
+    ['portal.downloads', 'portal_nav_downloads', 'portal.downloads*'],
+    ['portal.profile', 'portal_nav_profile', 'portal.profile*'],
   ];
 @endphp
 
@@ -20,10 +22,13 @@
   <section class="bg-gray-50 dark:bg-[#0e141b] border-b border-[#E2E8F0] dark:border-[#26313C]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-wider text-[#009EE0]">{{ __('site.portal_title') }}</p>
-          <p class="text-lg font-extrabold text-[#111111] dark:text-[#F8FAFC]">{{ $portalAccount['name'] ?? '' }}</p>
-        </div>
+        <a href="{{ route('portal.profile', $currentLocale) }}" class="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#009EE0]">
+          <x-avatar :name="$portalAccount['name'] ?? ''" :url="$portalAccount['avatar_url'] ?? null" />
+          <span>
+            <span class="block text-xs font-bold uppercase tracking-wider text-[#009EE0]">{{ __('site.portal_title') }}</span>
+            <span class="block text-lg font-extrabold text-[#111111] dark:text-[#F8FAFC]">{{ $portalAccount['name'] ?? '' }}</span>
+          </span>
+        </a>
         <form method="POST" action="{{ route('portal.logout', $currentLocale) }}">
           @csrf
           <x-button variant="secondary">{{ __('site.portal_sign_out') }}</x-button>

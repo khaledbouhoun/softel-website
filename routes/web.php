@@ -40,17 +40,29 @@ Route::prefix('{locale}')
             Route::get('/forgot-password', [PasswordController::class, 'request'])->name('portal.password.request');
             Route::get('/reset-password/{token}', [PasswordController::class, 'reset'])->name('portal.password.reset');
 
+            // Google OAuth
+            Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('portal.auth.google');
+            Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('portal.auth.google.callback');
+
+            // E-mail verification
+            Route::get('/verify-email', [AuthController::class, 'showVerifyEmail'])->name('portal.verify.email');
+
             Route::middleware('throttle:portal-auth')->group(function () {
                 Route::post('/sign-in', [AuthController::class, 'login'])->name('portal.login.store');
                 Route::post('/sign-up', [AuthController::class, 'register'])->name('portal.register.store');
                 Route::post('/forgot-password', [PasswordController::class, 'email'])->name('portal.password.email');
                 Route::post('/reset-password', [PasswordController::class, 'update'])->name('portal.password.update');
+                Route::post('/verify-email', [AuthController::class, 'verifyEmail'])->name('portal.verify.email.store');
+                Route::post('/resend-verification', [AuthController::class, 'resendVerification'])->name('portal.verify.resend');
             });
 
             Route::middleware('portal.auth')->group(function () {
                 Route::post('/sign-out', [AuthController::class, 'logout'])->name('portal.logout');
 
                 Route::get('/', [AccountController::class, 'dashboard'])->name('portal.dashboard');
+
+                Route::get('/profile', [AccountController::class, 'profile'])->name('portal.profile');
+                Route::patch('/profile', [AccountController::class, 'updateProfile'])->name('portal.profile.update');
 
                 Route::get('/request', [BookingController::class, 'create'])->name('portal.request.create');
                 Route::post('/request', [BookingController::class, 'store'])->name('portal.request.store');
@@ -66,6 +78,8 @@ Route::prefix('{locale}')
                 Route::get('/trials', [AccountController::class, 'trials'])->name('portal.trials');
                 Route::get('/products', [AccountController::class, 'products'])->name('portal.products');
                 Route::get('/updates', [AccountController::class, 'updates'])->name('portal.updates');
+                Route::get('/downloads', [AccountController::class, 'downloads'])->name('portal.downloads');
+                Route::get('/downloads/{id}', [AccountController::class, 'downloadRelease'])->whereNumber('id')->name('portal.downloads.file');
 
                 Route::get('/support', [InterventionController::class, 'index'])->name('portal.interventions.index');
                 Route::get('/support/new', [InterventionController::class, 'create'])->name('portal.interventions.create');
@@ -75,6 +89,7 @@ Route::prefix('{locale}')
                 Route::post('/support/{id}/transition', [InterventionController::class, 'transition'])->whereNumber('id')->name('portal.interventions.transition');
                 Route::post('/support/{id}/attachments', [InterventionController::class, 'attach'])->whereNumber('id')->name('portal.interventions.attach');
                 Route::get('/support/{id}/attachments/{attachmentId}', [InterventionController::class, 'download'])->whereNumber(['id', 'attachmentId'])->name('portal.interventions.download');
+                Route::get('/support/{id}/attachments/{attachmentId}/preview', [InterventionController::class, 'preview'])->whereNumber(['id', 'attachmentId'])->name('portal.interventions.preview');
             });
         });
     });

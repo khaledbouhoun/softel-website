@@ -7,6 +7,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -83,6 +84,74 @@ class CrmPortalClient
         }
 
         return $response;
+    }
+
+    /**
+     * Large binary (release installers): the body is handed back as a stream and never loaded into memory.
+     *
+     * @return array{status: int, headers: array<string, string>, body: \Psr\Http\Message\StreamInterface}
+     */
+    public function stream(string $path): array
+    {
+        $this->assertConfigured();
+
+        try {
+            $response = $this->pending(true)->withOptions(['stream' => true])->get($this->url($path));
+        } catch (ConnectionException) {
+            Log::warning('crm.unreachable', ['method' => 'GET', 'path' => $path]);
+            throw new CrmApiException('CRM unreachable', 0);
+        }
+
+        if ($response->failed()) {
+            throw $this->toException('GET', $path, $response);
+        }
+
+        return [
+            'status' => $response->status(),
+            'headers' => array_filter([
+                'Content-Type' => $response->header('Content-Type') ?: 'application/octet-stream',
+                'Content-Disposition' => $response->header('Content-Disposition') ?: 'attachment',
+                'Content-Length' => $response->header('Content-Length') ?: null,
+            ]),
+            'body' => $response->toPsrResponse()->getBody(),
+        ];
+    }
+
+    /**
+     * The 58 wilayas ({code, name, name_ar, label}); they never change, so they are cached for a day.
+     *
+     * @return list<array{code: string, name: string, name_ar: string, label: string}>
+     */
+    public function wilayas(): array
+    {
+        return Cache::remember('portal.wilayas', now()->addDay(), fn () => array_values((array) $this->get('catalog/wilayas', [], false)['data']));
+    }
+
+    /**
+     * Google sign-in / sign-up: ['google_id', 'email', 'name', 'locale', 'avatar_url'?] => ['token' => ..., 'account' => ..., 'onboarding' => ...].
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public function googleAuth(array $data): array
+    {
+        return (array) $this->post('auth/google', $data, false)['data'];
+    }
+
+    /**
+     * @return array<string, mixed>  ['verified' => true] or ['already_verified' => true]; throws CrmApiException on a bad code
+     */
+    public function verifyEmail(string $email, string $code): array
+    {
+        return (array) $this->post('auth/verify-email', ['email' => $email, 'code' => $code], false)['data'];
+    }
+
+    /**
+     * @return array<string, mixed>  ['verification_code' => ?string] (null when nothing needs sending)
+     */
+    public function resendVerification(string $email): array
+    {
+        return (array) $this->post('auth/resend-verification', ['email' => $email], false)['data'];
     }
 
     public function isConfigured(): bool

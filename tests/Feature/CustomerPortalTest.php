@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\CrmApiException;
 use App\Mail\PortalPasswordResetMail;
+use App\Services\CrmPortalClient;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -57,6 +59,14 @@ class CustomerPortalTest extends TestCase
         $slot = now('Africa/Algiers')->addDay()->setTime(9, 0);
         $defaults = [
             'catalog/products' => $this->ok([['id' => 7, 'name' => 'GESTCOM', 'description' => 'ERP'], ['id' => 8, 'name' => 'Other', 'description' => null]]),
+            'catalog/checklist' => $this->ok([['type' => 'independent', 'selection' => 'multiple', 'pack' => null, 'products' => [
+                ['id' => 7, 'name' => 'GESTCOM', 'description' => 'ERP', 'exclusive_with' => []], ['id' => 8, 'name' => 'Other', 'description' => null, 'exclusive_with' => []],
+            ]]]),
+            'catalog/wilayas' => $this->ok([
+                ['code' => '16', 'name' => 'Alger', 'name_ar' => 'الجزائر', 'label' => '16 - Alger'],
+                ['code' => '31', 'name' => 'Oran', 'name_ar' => 'وهران', 'label' => '31 - Oran'],
+            ]),
+            'me' => $this->ok(['id' => 1, 'name' => 'Amine B', 'request_defaults' => []]),
             'availability*' => $this->ok([
                 'timezone' => 'Africa/Algiers', 'slot_minutes' => 45, 'hold_expiry_minutes' => 30,
                 'slots' => [
@@ -81,7 +91,7 @@ class CustomerPortalTest extends TestCase
      */
     private function signedIn(): array
     {
-        return ['portal.token' => 'customer-token', 'portal.account' => ['id' => 1, 'name' => 'Amine B', 'email' => 'amine@example.dz', 'phone' => '0555123456', 'is_customer' => false]];
+        return ['portal.token' => 'customer-token', 'portal.account' => ['id' => 1, 'name' => 'Amine B', 'email' => 'amine@example.dz', 'phone' => '0555123456', 'is_customer' => false, 'email_verified' => true]];
     }
 
     private function validRequest(array $extra = []): array
@@ -120,7 +130,7 @@ class CustomerPortalTest extends TestCase
 
     public function test_every_portal_page_requires_sign_in(): void
     {
-        foreach (['portal', 'portal/requests', 'portal/requests/1', 'portal/appointments', 'portal/trials', 'portal/products', 'portal/updates', 'portal/support', 'portal/support/new', 'portal/support/1'] as $path) {
+        foreach (['portal', 'portal/profile', 'portal/downloads', 'portal/requests', 'portal/requests/1', 'portal/appointments', 'portal/trials', 'portal/products', 'portal/updates', 'portal/support', 'portal/support/new', 'portal/support/1'] as $path) {
             $this->get('/en/'.$path)->assertRedirect(route('portal.login', 'en'));
         }
         $this->post('/en/portal/sign-out')->assertRedirect(route('portal.login', 'en'));
@@ -205,7 +215,8 @@ class CustomerPortalTest extends TestCase
             'password' => 'password1', 'password_confirmation' => 'password1', 'product' => 'gestcom', 'type' => 'demo',
         ]);
 
-        $response->assertRedirect(route('portal.request.create', ['locale' => 'fr', 'product' => 'gestcom', 'type' => 'demo']));
+        // The e-mail is confirmed first; the chosen product and type travel along.
+        $response->assertRedirect(route('portal.verify.email', ['locale' => 'fr', 'email' => 'new@example.dz', 'product' => 'gestcom', 'type' => 'demo']));
         $this->assertSame('tok-new', session('portal.token'));
         Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/auth/register') && $r['locale'] === 'fr' && $r['name'] === 'New User');
     }
@@ -293,7 +304,7 @@ class CustomerPortalTest extends TestCase
         $page->assertOk();
         $page->assertSee('value="amine@example.dz"', false);
         $page->assertSee('value="Amine B"', false);
-        $page->assertSee('<option value="7" selected>GESTCOM</option>', false);
+        $this->assertMatchesRegularExpression('/name="product_ids\[\]" value="7"[^>]*\schecked/', $page->getContent());
         $page->assertSee('name="slot_start"', false);
         $page->assertSee('09:00');
         $page->assertSee('45 min');
@@ -634,7 +645,7 @@ class CustomerPortalTest extends TestCase
 
     public function test_crm_portal_client_supports_patch_and_delete_methods(): void
     {
-        $client = app(\App\Services\CrmPortalClient::class);
+        $client = app(CrmPortalClient::class);
 
         Http::fake([
             self::BASE.'me' => Http::response(['success' => true, 'data' => ['name' => 'Updated'], 'meta' => null], 200),
@@ -664,13 +675,13 @@ class CustomerPortalTest extends TestCase
 
     public function test_crm_portal_client_throws_on_invalid_json_response(): void
     {
-        $client = app(\App\Services\CrmPortalClient::class);
+        $client = app(CrmPortalClient::class);
 
         Http::fake([
             self::BASE.'bad-endpoint' => Http::response('<html>Gateway Error</html>', 200, ['Content-Type' => 'text/html']),
         ]);
 
-        $this->expectException(\App\Exceptions\CrmApiException::class);
+        $this->expectException(CrmApiException::class);
         $this->expectExceptionMessage('Invalid response from CRM');
 
         $client->get('bad-endpoint', [], false);
@@ -679,10 +690,10 @@ class CustomerPortalTest extends TestCase
     public function test_crm_portal_client_throws_when_unconfigured(): void
     {
         config(['services.crm.base_url' => '', 'services.crm.key' => '']);
-        $client = app(\App\Services\CrmPortalClient::class);
+        $client = app(CrmPortalClient::class);
 
         $this->assertFalse($client->isConfigured());
-        $this->expectException(\App\Exceptions\CrmApiException::class);
+        $this->expectException(CrmApiException::class);
         $this->expectExceptionMessage('CRM is not configured');
 
         $client->get('catalog/products', [], false);

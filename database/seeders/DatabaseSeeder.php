@@ -13,5 +13,9 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             TestimonialSeeder::class,
         ]);
+
+        if (! app()->runningUnitTests()) {
+            $this->call(LeadSeeder::class);
+        }
     }
 }
