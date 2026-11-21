@@ -166,7 +166,7 @@ class PortalOnboardingFrontendTest extends TestCase
         $page = $this->withSession($this->signedIn() + ['portal.onboarding' => ['redirect_to' => 'new_request']])->get('/en/portal/request');
 
         $page->assertOk()->assertSee('value="Atlas Trading"', false)->assertSee('value="Karim B."', false)->assertSee('value="Bab Ezzouar"', false)
-            ->assertSee('value="16 - Alger"', false)->assertSee('We filled in your saved details')->assertSee('Welcome!');
+            ->assertSee('value="16 - Alger"', false)->assertSee('Saved Contact Details')->assertSee('Welcome!');
         Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/me') && $r->hasHeader('Authorization', 'Bearer customer-token'));
     }
 
@@ -183,8 +183,9 @@ class PortalOnboardingFrontendTest extends TestCase
 
     public function test_wilayas_come_from_the_crm_in_a_searchable_list(): void
     {
-        $this->fakeCrm();
+        $this->fakeCrm(['me' => $this->ok(['request_defaults' => []])]);
 
+        // Fresh account without saved details sees the wilaya field and datalist
         $page = $this->withSession($this->signedIn())->get('/en/portal/request');
 
         $page->assertSee('list="wilayas-list-wilaya"', false)->assertSee('<option value="16 - Alger">16 - Alger / الجزائر</option>', false)->assertSee('<option value="31 - Oran">31 - Oran / وهران</option>', false);
@@ -243,16 +244,15 @@ class PortalOnboardingFrontendTest extends TestCase
         Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/requests') && $r['product_id'] === 8 && ! isset($r['product_ids']));
     }
 
-    public function test_a_presentation_is_limited_to_one_product_and_a_product_is_required(): void
+    public function test_a_presentation_can_include_several_products_and_a_product_is_required(): void
     {
-        $this->fakeCrm();
+        $this->fakeCrm(['requests' => $this->ok([['id' => 12, 'type' => 'demo'], ['id' => 13, 'type' => 'demo']], 201)]);
         $slot = now('Africa/Algiers')->addDay()->setTime(9, 0)->toIso8601String();
 
         $this->withSession($this->signedIn())->post('/en/portal/request', $this->submission(['type' => 'demo', 'slot_start' => $slot, 'product_ids' => [7, 8]]))
-            ->assertSessionHasErrors(['product_ids' => 'A presentation is booked for one product at a time.']);
+            ->assertSessionHasNoErrors();
         $this->withSession($this->signedIn())->post('/en/portal/request', $this->submission(['product_ids' => []]))->assertSessionHasErrors('product_ids');
         $this->withSession($this->signedIn())->post('/en/portal/request', array_diff_key($this->submission(), ['product_ids' => 1]))->assertSessionHasErrors('product_ids');
-        Http::assertNotSent(fn (Request $r) => str_ends_with($r->url(), '/requests'));
     }
 
     public function test_the_crm_pack_rule_error_is_shown_on_the_product_list(): void

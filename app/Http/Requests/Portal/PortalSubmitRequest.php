@@ -46,16 +46,6 @@ class PortalSubmitRequest extends FormRequest
         ];
     }
 
-    /** A presentation holds one time slot, so it is booked for a single product. */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $v) {
-            if ($this->input('type') === 'demo' && count((array) $this->input('product_ids', [])) > 1) {
-                $v->errors()->add('product_ids', __('site.portal_presentation_single'));
-            }
-        });
-    }
-
     /** @return list<int> the chosen product ids, whichever field carried them */
     public function productIds(): array
     {
